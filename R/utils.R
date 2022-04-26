@@ -125,6 +125,54 @@ newdat <- HiSCR(data)
 RR(newdat, TRT, HiSCR, sm = "OR")
 RR(newdat, TRT, newHiSCR, sm = "OR")
 
+#'Returns data frame with treatment effect estimates for varying HiSCR definitions
+#' @description builds data by internally calling function HiSCR above
+#' @param .data
+varying_def_data <- function(.data, 
+                             AN_incr_range = -seq(0.25, 0.75, 0.05),
+                             fist_incr_range = 0,
+                             abscesses_incr = 0,
+                             sm = c("RR", "OR"), 
+                             method_RR = c("wald", "small", "boot"),
+                             method_OR = c("midp", "fisher", "wald", "small")
+                             
+                             
+                             
+                             )
+{
+  
+  sm <- match.arg(sm)
+  method_RR <- match.arg(method_RR)
+  method_OR <- match.arg(method_OR)
+  
+  
+  do.call("rbind",
+          lapply(AN_incr_range, function(i)
+            do.call("rbind",
+                    lapply(fist_incr_range, function(j)
+                      do.call("rbind",
+                              lapply(abscesses_incr, function(k)
+                              {
+                                TE <- RR(
+                                  HiSCR(.data, i, j, k),
+                                  TRT, newHiSCR,          # fixed 
+                                  sm, method_RR, method_OR
+                                  )
+                                
+                                out <- as.data.frame(as.list(TE$measure[2,]))
+                                out$AN_incr <- i
+                                out$fist_incr <- j
+                                out$abscesses_incr <- k
+                                return(out)
+                              }
+                                ))
+                      ))
+            ) )
+  
+}
+
+
+#TODO: ggplot function to plot RR against range of values for AN count decrease
 
 # TODO shiny app capture printout --- create time animation for varying HiSCR definitions
 
