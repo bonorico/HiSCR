@@ -172,7 +172,7 @@ varying_def_data <- function(.data,
 }
 
 
-#TODO: ggplot function to plot RR against range of values for AN count decrease
+#TODO: ggplot function to plot RR against range of values for AN count decrease geom_pointrange()
 
 # TODO shiny app capture printout --- create time animation for varying HiSCR definitions
 
