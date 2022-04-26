@@ -20,6 +20,7 @@ RR <- function(.data, TRT, HiSCR,
   method_RR <- match.arg(method_RR)
   method_OR <- match.arg(method_OR)
   
+  # invert effect direction depending on chosen measure (for RR small is good - RR for not having HiSCR, whereas for OR big is good - OR for HiSCR)
   thatway <- list(RR = function(x) x,
                   OR = function(x) desc(x))[[sm]]
   
@@ -159,7 +160,7 @@ varying_def_data <- function(.data,
                                   sm, method_RR, method_OR
                                   )
                                 
-                                out <- as.data.frame(as.list(TE$measure[2,]))
+                                out <- as.data.frame(as.list(TE$measure[2,])) # extract data
                                 out$AN_incr <- i
                                 out$fist_incr <- j
                                 out$abscesses_incr <- k
@@ -173,6 +174,16 @@ varying_def_data <- function(.data,
 
 
 #TODO: ggplot function to plot RR against range of values for AN count decrease geom_pointrange()
+
+# #example
+# ggplot(df.summary2, aes(dose, len)) +
+#   geom_pointrange(
+#     aes(ymin = len-sd, ymax = len+sd, color = supp),
+#     position = position_dodge(0.3)
+#   )+
+#   scale_color_manual(values = c("#00AFBB", "#E7B800"))
+# 
+
 
 # TODO shiny app capture printout --- create time animation for varying HiSCR definitions
 
