@@ -121,8 +121,8 @@ HiSCR <- function(.data, AN_incr = -0.5, fist_incr = 0, abscesses_incr = 0)
 #newdat <- HiSCR(data)
 
 # Something does not agree with original data ... ???
-RR(newdat, TRT, HiSCR, sm = "OR")
-RR(newdat, TRT, newHiSCR, sm = "OR")
+# RR(newdat, TRT, HiSCR, sm = "OR")
+# RR(newdat, TRT, newHiSCR, sm = "OR")
 
 #'Returns data frame with treatment effect estimates for varying HiSCR definitions
 #' @description builds data by internally calling function HiSCR above
@@ -130,7 +130,7 @@ RR(newdat, TRT, newHiSCR, sm = "OR")
 varying_def_data <- function(.data, 
                              AN_incr_range = -seq(0.25, 0.75, 0.05),
                              fist_incr_range = 0,
-                             abscesses_incr = 0,
+                             abscesses_incr_range = 0,
                              sm = c("RR", "OR"), 
                              method_RR = c("wald", "small", "boot"),
                              method_OR = c("midp", "fisher", "wald", "small")
@@ -145,7 +145,7 @@ varying_def_data <- function(.data,
             do.call("rbind",
                     lapply(fist_incr_range, function(j)
                       do.call("rbind",
-                              lapply(abscesses_incr, function(k)
+                              lapply(abscesses_incr_range, function(k)
                               {
                                 TE <- RR(
                                   HiSCR(.data, i, j, k),
@@ -172,10 +172,10 @@ varying_def_data <- function(.data,
 #' Plots treatment effect for vaying definitinos of HiSCR
 #' @description  see above for arguments.
 plot_effect <- function(.data, 
-                        transition_var,
                         AN_incr_range = -seq(0.25, 0.75, 0.05),
+                        transition_var = "fist_incr",
                         fist_incr_range = 0,
-                        abscesses_incr = 0,
+                        abscesses_incr_range = 0,
                         sm = c("RR", "OR"), 
                         method_RR = c("wald", "small", "boot"),
                         method_OR = c("midp", "fisher", "wald", "small")
@@ -195,15 +195,19 @@ plot_effect <- function(.data,
   newdat <- varying_def_data(data, 
                              AN_incr_range,
                              fist_incr_range,
-                             abscesses_incr,
+                             abscesses_incr_range,
                              sm, 
                              method_RR,
                              method_OR)
-  transvar <- switch(newdat %>% select({{transition_var}}) %>% names,
+  # transvar <- switch(newdat %>% select({{transition_var}}) %>% names,
+  #                    fist_incr = "Change in number of fistulae from baseline",
+  #                    abscesses_incr = "Change in number of abscesses from baseline"
+  # )
+  transvar <- switch(transition_var,
                      fist_incr = "Change in number of fistulae from baseline",
                      abscesses_incr = "Change in number of abscesses from baseline"
   )
-  
+
   ggplot(newdat, aes(x = AN_incr, y = estimate) ) +
     geom_pointrange(data = ref_dat, aes(x = ref_AN_incr, y = estimate, 
                                         ymin = lower, ymax = upper ),
@@ -217,7 +221,8 @@ plot_effect <- function(.data,
     ylab(switch(sm,
                 RR = "treatment better \U2190 1/RR \U2192 treatment worst",
                 OR = "treatment worst \U2190 OR \U2192 treatment better")) +
-    transition_time({{transition_var}}) +
+    # transition_time({{transition_var}}) +
+    transition_time(eval(sym(transition_var), newdat)) +  # must evaluate symbol at current data !!!
     ease_aes('linear') +
     theme_light() +
     theme(panel.grid.minor = element_blank(),
@@ -227,7 +232,7 @@ plot_effect <- function(.data,
 }
 
 
-plot_effect(data, fist_incr, fist_incr_range = seq(0, 10, 1))
+# plot_effect(data, transition_var = "fist_incr", fist_incr_range = seq(0, 10, 1))
 
 # NOTE: you could implement bi-dimensional transition by creating a new transition variable as the result of combining two separate ones (e.g., va1.var2 as real number). But I think this is too much for the actual task, so I will go with selective transition (choose to transition either with one or other variable).
 
