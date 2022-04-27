@@ -226,7 +226,8 @@ plot_effect <- function(.data,
     ease_aes('linear') +
     theme_light() +
     theme(panel.grid.minor = element_blank(),
-          panel.border = element_blank())
+          panel.border = element_blank()) +
+    geom_hline(yintercept = 1, colour = "green", alpha = 0.5)
     
   
 }
