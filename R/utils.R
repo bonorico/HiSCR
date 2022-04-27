@@ -3,6 +3,9 @@
 
 library(tidyverse)
 library(shiny)
+library(gganimate)
+library(transformr)
+library(gifski)
 library(epitools)
 
 data <- read.csv("https://raw.githubusercontent.com/VIS-SIG/Wonderful-Wednesdays/master/data/2022/2022-04-13/HiSCR_dat.csv")
@@ -72,7 +75,7 @@ change <- function(.data, baseline, week16, method = c("fraction", "absolute"))
                                                NA_integer_, 
                                                {{baseline}} ))
            }
-             
+           
            .data %>% 
              mutate(change = ({{week16}} - {{baseline}})/{{baseline}}) %>% 
              pull(change)
@@ -94,7 +97,7 @@ change <- function(.data, baseline, week16, method = c("fraction", "absolute"))
 #' @param abscesses_incr - scalar numeric - Value for absolute change in number of abscesses relative to baseline
 #' @param checkupvs - character - label of original HiSCR variable to check up new results to
 #' @returns newly computed HiSCR and TRT
-HiSCR <- function(.data, AN_incr = -0.5, fist_incr = 0, abscesses_incr = 0, checkupvs = "HiSCR")
+HiSCR <- function(.data, AN_incr = -0.5, fist_incr = 0, abscesses_incr = 0)
 {
   if (AN_incr > 0)
     stop("AN_increase (AN count increase) must be negative")
@@ -110,19 +113,14 @@ HiSCR <- function(.data, AN_incr = -0.5, fist_incr = 0, abscesses_incr = 0, chec
   
   .data %>% mutate(newHiSCR = if_else(
     AN_change <= AN_incr & fist_change <= fist_incr & abscess_change <= abscesses_incr,
-    "Yes", "No")  
-    ) %>% 
-    # { 
-    #   browser()
-    #   if (any(.data[[checkupvs]] != .data[["newHiSCR"]]))
-    #     message("new HiSCR values have changed from reference ones")
-    #   .
-    # } %>% 
-    select(TRT, newHiSCR, HiSCR)
+    "Yes", "No")  )
+  # ) %>% 
+  #   select(TRT, newHiSCR, HiSCR)
 }
 
-newdat <- HiSCR(data)
+#newdat <- HiSCR(data)
 
+# Something does not agree with original data ... ???
 RR(newdat, TRT, HiSCR, sm = "OR")
 RR(newdat, TRT, newHiSCR, sm = "OR")
 
@@ -136,16 +134,11 @@ varying_def_data <- function(.data,
                              sm = c("RR", "OR"), 
                              method_RR = c("wald", "small", "boot"),
                              method_OR = c("midp", "fisher", "wald", "small")
-                             
-                             
-                             
-                             )
+)
 {
-  
   sm <- match.arg(sm)
   method_RR <- match.arg(method_RR)
   method_OR <- match.arg(method_OR)
-  
   
   do.call("rbind",
           lapply(AN_incr_range, function(i)
@@ -158,33 +151,84 @@ varying_def_data <- function(.data,
                                   HiSCR(.data, i, j, k),
                                   TRT, newHiSCR,          # fixed 
                                   sm, method_RR, method_OR
-                                  )
+                                )
                                 
                                 out <- as.data.frame(as.list(TE$measure[2,])) # extract data
-                                out$AN_incr <- i
+                                out$AN_incr <- i*(-100) # percent positive for plotting
                                 out$fist_incr <- j
                                 out$abscesses_incr <- k
                                 return(out)
                               }
-                                ))
-                      ))
-            ) )
+                              ))
+                    ))
+          ) )
   
 }
 
 
-#TODO: ggplot function to plot RR against range of values for AN count decrease geom_pointrange()
+#newdat <- varying_def_data(data)
+#RR(HiSCR(data), TRT, newHiSCR, sm = "RR")$measure
 
-# #example
-# ggplot(df.summary2, aes(dose, len)) +
-#   geom_pointrange(
-#     aes(ymin = len-sd, ymax = len+sd, color = supp),
-#     position = position_dodge(0.3)
-#   )+
-#   scale_color_manual(values = c("#00AFBB", "#E7B800"))
-# 
+#' Plots treatment effect for vaying definitinos of HiSCR
+#' @description  see above for arguments.
+plot_effect <- function(.data, 
+                        transition_var,
+                        AN_incr_range = -seq(0.25, 0.75, 0.05),
+                        fist_incr_range = 0,
+                        abscesses_incr = 0,
+                        sm = c("RR", "OR"), 
+                        method_RR = c("wald", "small", "boot"),
+                        method_OR = c("midp", "fisher", "wald", "small")
+                        )
+{
+  sm <- match.arg(sm)
+  method_RR <- match.arg(method_RR)
+  method_OR <- match.arg(method_OR)
+  
+  ref_dat <- varying_def_data(data, AN_incr_range = -0.5,
+                              sm = sm, 
+                              method_RR = method_RR,
+                              method_OR = method_OR) %>% 
+    select(estimate, lower, upper, AN_incr) %>% 
+    rename(ref_AN_incr = AN_incr)
+  
+  newdat <- varying_def_data(data, 
+                             AN_incr_range,
+                             fist_incr_range,
+                             abscesses_incr,
+                             sm, 
+                             method_RR,
+                             method_OR)
+  transvar <- switch(newdat %>% select({{transition_var}}) %>% names,
+                     fist_incr = "Change in number of fistulae from baseline",
+                     abscesses_incr = "Change in number of abscesses from baseline"
+  )
+  
+  ggplot(newdat, aes(x = AN_incr, y = estimate) ) +
+    geom_pointrange(data = ref_dat, aes(x = ref_AN_incr, y = estimate, 
+                                        ymin = lower, ymax = upper ),
+                    alpha = 0.8, colour = "red", position = position_dodge2(width=1.5, 
+                                                                            preserve = "single")) +
+    geom_pointrange(aes(ymin = lower, ymax = upper)) +
+    ggtitle("Treatment effect on HiSCR (point estimate with 95% CIs)",
+            subtitle = "{transvar} is {round(frame_time, 0)}")  +
+    #theme_bw() + 
+    xlab("Percent decrease in AN count") +
+    ylab(switch(sm,
+                RR = "treatment better \U2190 1/RR \U2192 treatment worst",
+                OR = "treatment worst \U2190 OR \U2192 treatment better")) +
+    transition_time({{transition_var}}) +
+    ease_aes('linear') +
+    theme_light() +
+    theme(panel.grid.minor = element_blank(),
+          panel.border = element_blank())
+    
+  
+}
 
 
-# TODO shiny app capture printout --- create time animation for varying HiSCR definitions
+plot_effect(data, fist_incr, fist_incr_range = seq(0, 10, 1))
 
-# Change in treatment effect at W 16 (RR or OR) for varying HiSCR definitions (animatet plot), Y-axis = sm, X-axis = AN_increase 
+# NOTE: you could implement bi-dimensional transition by creating a new transition variable as the result of combining two separate ones (e.g., va1.var2 as real number). But I think this is too much for the actual task, so I will go with selective transition (choose to transition either with one or other variable).
+
+
