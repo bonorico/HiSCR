@@ -16,6 +16,9 @@ server <- function(input, output)
   output$plot <- renderImage(
     {
       #convert inputs
+      AN <- input$AN_incr_range
+      fist <- input$fist_incr_range
+      absc <- input$abscesses_incr_range
       transition_var <- switch(input$transition_var,
                                "Number of abscesses" = "abscesses_incr",
                                "Number of draining fistulae" = "fist_incr"
@@ -45,16 +48,16 @@ server <- function(input, output)
       
       p = plot_effect(data, 
                       transition_var = transition_var,
-                      AN_incr_range = input$AN_incr_range*(-1),
+                      AN_incr_range = -seq(AN[1], AN[2], 0.05),
                       fist_incr_range = {
                         if (transition_var == "fist_incr")
-                          input$fist_incr_range
+                          seq(fist[1], fist[2], length.out = abs(fist[1] - fist[2]))
                         else
                           0
                       },
                       abscesses_incr_range = {
                         if (transition_var == "abscesses_incr")
-                          input$abscesses_incr_range
+                          seq(absc[1], absc[2], length.out = abs(absc[1] - absc[2]))
                         else
                           0
                       },
@@ -70,7 +73,7 @@ server <- function(input, output)
       list(src = "outfile.gif",
            contentType = 'image/gif',
             width = 700,
-            height = 500
+            height = 550
            )
     },
     deleteFile = TRUE
