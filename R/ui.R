@@ -73,7 +73,12 @@ ui <- fluidPage(
     ),
     
     mainPanel(
-      imageOutput("plot")
+      imageOutput("plot"),
+      
+      # br(), br(),
+      # 
+      # p("The red dot is the reference estimate under the standard HiSCR definition"),
+      # p("Horizontal green: no treatment effect")
     )
   )
   
