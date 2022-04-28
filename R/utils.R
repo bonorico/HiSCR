@@ -10,8 +10,8 @@ library(epitools)
 
 data <- read.csv("https://raw.githubusercontent.com/VIS-SIG/Wonderful-Wednesdays/master/data/2022/2022-04-13/HiSCR_dat.csv")
 
-data %>% head()
-data %>% str()
+# data %>% head()
+# data %>% str()
 
 # Endpoint function: RR at week 16
 RR <- function(.data, TRT, HiSCR, 
@@ -101,9 +101,6 @@ HiSCR <- function(.data, AN_incr = -0.5, fist_incr = 0, abscesses_incr = 0)
 {
   if (AN_incr > 0)
     stop("AN_increase (AN count increase) must be negative")
-  # if (fist_incr > 0 | abscesses_incr > 0)
-  #   stop("fist_incr and abscesses_incr (increase in number of draining fistulae or abscesses) must be negative")
-  # the other tresholds can be integer positive and negative
   
   .data$AN_count.base <- .data %>% AN_count("abscesses.base", "infl.nod.base")
   .data$AN_count.w16 <- .data %>% AN_count("abscesses.w16", "infl.nod.w16")
@@ -114,8 +111,7 @@ HiSCR <- function(.data, AN_incr = -0.5, fist_incr = 0, abscesses_incr = 0)
   .data %>% mutate(newHiSCR = if_else(
     AN_change <= AN_incr & fist_change <= fist_incr & abscess_change <= abscesses_incr,
     "Yes", "No")  )
-  # ) %>% 
-  #   select(TRT, newHiSCR, HiSCR)
+  
 }
 
 #newdat <- HiSCR(data)
@@ -179,7 +175,7 @@ plot_effect <- function(.data,
                         sm = c("RR", "OR"), 
                         method_RR = c("wald", "small", "boot"),
                         method_OR = c("midp", "fisher", "wald", "small")
-                        )
+)
 {
   sm <- match.arg(sm)
   method_RR <- match.arg(method_RR)
@@ -199,36 +195,32 @@ plot_effect <- function(.data,
                              sm, 
                              method_RR,
                              method_OR)
-  # transvar <- switch(newdat %>% select({{transition_var}}) %>% names,
-  #                    fist_incr = "Change in number of fistulae from baseline",
-  #                    abscesses_incr = "Change in number of abscesses from baseline"
-  # )
+  
   transvar <- switch(transition_var,
                      fist_incr = "Change in number of fistulae from baseline",
                      abscesses_incr = "Change in number of abscesses from baseline"
   )
-
+  
   ggplot(newdat, aes(x = AN_incr, y = estimate) ) +
     geom_pointrange(data = ref_dat, aes(x = ref_AN_incr, y = estimate, 
                                         ymin = lower, ymax = upper ),
-                    alpha = 0.8, colour = "red", position = position_dodge2(width=1.5, 
-                                                                            preserve = "single")) +
+                    alpha = 0.8, colour = "firebrick1", position = position_dodge2(width=1.5, 
+                                                                                   preserve = "single")) +
     geom_pointrange(aes(ymin = lower, ymax = upper)) +
     ggtitle("Treatment effect on HiSCR (point estimate with 95% CIs)",
-            subtitle = "{transvar} is {round(frame_time, 0)}")  +
-    #theme_bw() + 
+            subtitle = "{transvar}: {round(frame_time, 0)}")  +
     xlab("Percent decrease in AN count") +
     ylab(switch(sm,
-                RR = "treatment better \U2190 1/RR \U2192 treatment worst",
-                OR = "treatment worst \U2190 OR \U2192 treatment better")) +
-    # transition_time({{transition_var}}) +
+                RR = paste0(toupper("treatment better"), " \U2190 1/RR \U2192 ", toupper("treatment worst")),
+                OR = paste0(toupper("treatment worst"), " \U2190 OR \U2192 ", toupper("treatment better"))
+    )) +
     transition_time(eval(sym(transition_var), newdat)) +  # must evaluate symbol at current data !!!
     ease_aes('linear') +
     theme_light() +
     theme(panel.grid.minor = element_blank(),
           panel.border = element_blank()) +
-    geom_hline(yintercept = 1, colour = "green", alpha = 0.5)
-    
+    geom_hline(yintercept = 1, colour = "indianred", alpha = 0.5)
+  
   
 }
 
