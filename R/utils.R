@@ -23,23 +23,25 @@ RR <- function(.data, TRT, HiSCR,
   method_RR <- match.arg(method_RR)
   method_OR <- match.arg(method_OR)
   
-  # invert effect direction depending on chosen measure (for RR small is good - RR for not having HiSCR, whereas for OR big is good - OR for HiSCR)
-  thatway <- list(RR = function(x) x,
-                  OR = function(x) desc(x))[[sm]]
-  
   tab <- .data %>% 
     group_by({{TRT}}, {{HiSCR}}) %>% 
     summarise(n = n()) %>% 
-    arrange(thatway({{TRT}})) %>% 
+    arrange(desc({{TRT}})) %>% 
     pull(n) %>% 
     matrix(nrow = 2) %>% 
     t()
   
   dimnames(tab) <- list("Treatment" = rev(unique(.data %>% select({{TRT}}) %>% pull() )),
                         "Outcome" = unique(.data %>% select({{HiSCR}}) %>% pull()))
-  
+
   switch(sm,
-         RR = riskratio(tab, method = method_RR),
+         RR = {
+           res <- riskratio(tab, method = method_RR)
+           # invert effect direction depending on chosen measure (for RR small is good - RR for not having HiSCR, whereas for OR big is good - OR for HiSCR)
+           res$measure[2, ] <- 1/res$measure[2, ]
+           names(attributes(res$measure)$dimnames) <- c("Treatment", "inverse risk ratio with 95% C.I.")
+           res
+         },
          OR = oddsratio(tab, method = method_OR)
   )
   
