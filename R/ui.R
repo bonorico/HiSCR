@@ -11,7 +11,7 @@ ui <- fluidPage(
                   "Select a range for the fraction decrease in AN count:",
                   min = 0.1,
                   max = 0.9,
-                  value = c(0.25, 0.75),
+                  value = c(0.25, 0.65),
                   step = 0.05
       ),
       
@@ -25,9 +25,9 @@ ui <- fluidPage(
         condition = "input.transition_var == 'Number of abscesses'",
         sliderInput("abscesses_incr_range",
                     "Select a range for the change in number of abscesses from baseline:",
-                    min = -10,
-                    max = 10,
-                    value = c(0, 5),
+                    min = -4,
+                    max = 4,
+                    value = c(-2, 2),
                     step = 1
         )
         
@@ -37,9 +37,9 @@ ui <- fluidPage(
         condition = "input.transition_var == 'Number of draining fistulae'",
         sliderInput("fist_incr_range",
                     "Select a range for the change in number of draining fistulae from baseline:",
-                    min = -10,
-                    max = 10,
-                    value = c(0, 5),
+                    min = -4,
+                    max = 4,
+                    value = c(-2, 2),
                     step = 1
         )
         
