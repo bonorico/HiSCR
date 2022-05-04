@@ -199,8 +199,8 @@ plot_effect <- function(.data,
                              method_OR)
   
   transvar <- switch(transition_var,
-                     fist_incr = "Change in number of fistulae from baseline",
-                     abscesses_incr = "Change in number of abscesses from baseline"
+                     fist_incr = "Threshold for the change in number of fistulae from baseline",
+                     abscesses_incr = "Threshold for the change in number of abscesses from baseline"
   )
   
   ggplot(newdat, aes(x = AN_incr, y = estimate) ) +
@@ -211,7 +211,7 @@ plot_effect <- function(.data,
     geom_pointrange(aes(ymin = lower, ymax = upper)) +
     ggtitle("Treatment effect on HiSCR (point estimate with 95% CIs)",
             subtitle = "{transvar}: {round(frame_time, 0)}")  +
-    xlab("Percent decrease in AN count") +
+    xlab("Threshold for the percent decrease in AN count") +
     ylab(switch(sm,
                 RR = paste0(toupper("treatment better"), " \U2190 1/RR \U2192 ", toupper("treatment worst")),
                 OR = paste0(toupper("treatment worst"), " \U2190 OR \U2192 ", toupper("treatment better"))
