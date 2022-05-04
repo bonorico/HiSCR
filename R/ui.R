@@ -8,7 +8,7 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       sliderInput("AN_incr_range",
-                  "Select a range for the fraction decrease in AN count:",
+                  "Select a range for the threshold of fraction decrease in AN count:",
                   min = 0.1,
                   max = 0.9,
                   value = c(0.25, 0.65),
@@ -24,7 +24,7 @@ ui <- fluidPage(
       conditionalPanel(
         condition = "input.transition_var == 'Number of abscesses'",
         sliderInput("abscesses_incr_range",
-                    "Select a range for the change in number of abscesses from baseline:",
+                    "Select a range for the threshold of change in number of abscesses from baseline:",
                     min = -4,
                     max = 4,
                     value = c(-2, 2),
@@ -36,7 +36,7 @@ ui <- fluidPage(
       conditionalPanel(
         condition = "input.transition_var == 'Number of draining fistulae'",
         sliderInput("fist_incr_range",
-                    "Select a range for the change in number of draining fistulae from baseline:",
+                    "Select a range for the threshold of change in number of draining fistulae from baseline:",
                     min = -4,
                     max = 4,
                     value = c(-2, 2),
@@ -112,7 +112,7 @@ ui <- fluidPage(
           fluidRow(
             column(4,
                    numericInput("AN_decr",
-                                "Select a fraction decrease in AN count:",
+                                "Select a threshold for the fraction decrease in AN count:",
                                 min = 0.1,
                                 max = 0.9,
                                 value = 0.5,
@@ -122,7 +122,7 @@ ui <- fluidPage(
             
             column(4,
                    numericInput("absc_decr",
-                                "Select a change in number of abscesses:",
+                                "Select a threshold for the change in number of abscesses:",
                                 min = -10,
                                 max = 10,
                                 value = 0,
@@ -133,7 +133,7 @@ ui <- fluidPage(
             
             column(4,
                    numericInput("fist_decr",
-                                "Select a change in number of draining fistulae:",
+                                "Select a threshold for the change in number of draining fistulae:",
                                 min = -10,
                                 max = 10,
                                 value = 0,
